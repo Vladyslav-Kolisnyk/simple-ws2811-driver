@@ -7,9 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define LED_PORT PORTB
-#define LED_DDR DDRB
-#define LED_PIN PORTB1
+#include "globals.h"
 
 struct RGB {
   uint8_t redBits;
@@ -19,10 +17,10 @@ struct RGB {
 
 struct RGB setRGB(uint8_t r, uint8_t g, uint8_t b);
 
-struct RGB* initStrip(uint8_t numLeds);
+struct RGB* initStrip();
 
-void showStrip(struct RGB* strip, uint8_t numLeds);
+void showStrip(struct RGB* strip);
 
-void clearStrip(struct RGB* strip, uint8_t numLeds);
+void clearStrip(struct RGB* strip);
 
 #endif

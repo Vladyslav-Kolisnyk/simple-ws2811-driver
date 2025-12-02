@@ -4,11 +4,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define LED_PORT PORTB
-#define LED_DDR DDRB
-#define LED_PIN PORTB1
+#include "globals.h"
 
-struct RGB {
+struct RGB 
+{
   uint8_t redBits;
   uint8_t greenBits;
   uint8_t blueBits;
@@ -72,11 +71,13 @@ struct RGB setRGB(uint8_t r, uint8_t g, uint8_t b)
   return rgb;
 }
 
-struct RGB* initStrip(uint8_t numLeds)
+struct RGB* initStrip()
 {
-  struct RGB* strip = (struct RGB*)malloc(numLeds * sizeof(struct RGB));
+  LED_DDR = LED_DDR | (1 << LED_PIN);
 
-  for (int i = 0; i < numLeds; i++)
+  struct RGB* strip = (struct RGB*)malloc(NUM_LEDS * sizeof(struct RGB));
+
+  for (int i = 0; i < NUM_LEDS; i++)
   {
     strip[i] = setRGB(0, 0, 0);
   }  
@@ -84,19 +85,19 @@ struct RGB* initStrip(uint8_t numLeds)
   return strip;
 }
 
-void showStrip(struct RGB* strip, uint8_t numLeds)
+void showStrip(struct RGB* strip)
 {
-  for (int i = 0; i < numLeds; i++)
+  for (int i = 0; i < NUM_LEDS; i++)
   {
-   sendPixel(strip[i]);
+    sendPixel(strip[i]);
   }
 
   reset();
 }
 
-void clearStrip(struct RGB* strip, uint8_t numLeds)
+void clearStrip(struct RGB* strip)
 {
-  for (int i = 0; i < numLeds; i++)
+  for (int i = 0; i < NUM_LEDS; i++)
   {
     strip[i] = setRGB(0, 0, 0);
   }

@@ -5,21 +5,18 @@
 #include <stdint.h>
 
 #include "ws2811_driver.h"
+#include "globals.h" 
 
 int main(void)
 {
-  LED_DDR = LED_DDR | (1 << LED_PIN);
-  
-  uint8_t numLeds = 112;
+  struct RGB* mystrip = initStrip();
 
-  struct RGB* mystrip = initStrip(numLeds);
-
-  clearStrip(mystrip, numLeds);
-  showStrip(mystrip, numLeds);
+  clearStrip(mystrip);
+  showStrip(mystrip);
 
   _delay_ms(500);
 
-  for (int i = 0; i < numLeds; i++)
+  for (int i = 0; i < NUM_LEDS; i++)
   {
     if (i % 2 == 0)
     {
@@ -30,7 +27,7 @@ int main(void)
       mystrip[i] = setRGB(0, 100, 100);
     }
     
-    showStrip(mystrip, numLeds);
+    showStrip(mystrip);
   }
 
   free(mystrip);
