@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "globals.h"
-
 struct RGB 
 {
   uint8_t redBits;
@@ -13,29 +11,36 @@ struct RGB
   uint8_t blueBits;
 };
 
-void sendOne()
+struct Strip
 {
-  LED_PORT = LED_PORT | (1 << LED_PIN);
-  asm volatile("nop\nnop\nnop\nnop\nnop\nnop\n");
-  LED_PORT = LED_PORT &~ (1 << LED_PIN);
-  asm volatile("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\n");
-}
+  uint8_t numLeds;
+  uint8_t ledPIN;
+  volatile uint8_t* ledPORT;
+  struct RGB* ledsArray;
+};
 
-void sendZero()
+void sendOne(volatile uint8_t* ledPORT, uint8_t ledPIN)
 {
-  LED_PORT = LED_PORT | (1 << LED_PIN);
+  *ledPORT = *ledPORT | (1 << ledPIN);
   asm volatile("nop\nnop\n");
-  LED_PORT = LED_PORT &~ (1 << LED_PIN);
-  asm volatile("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\n");
+  *ledPORT = *ledPORT &~ (1 << ledPIN);
+  asm volatile("nop\nnop\nnop\nnop\n");
 }
 
-void reset()
+void sendZero(volatile uint8_t* ledPORT, uint8_t ledPIN)
 {
-  LED_PORT = LED_PORT &~ (1 << LED_PIN);
+  *ledPORT = *ledPORT | (1 << ledPIN);
+  *ledPORT = *ledPORT &~ (1 << ledPIN);
+  asm volatile("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\n");
+}
+
+void reset(volatile uint8_t* ledPORT, uint8_t ledPIN)
+{
+  *ledPORT = *ledPORT &~ (1 << ledPIN);
   _delay_us(60);
 }
 
-void sendByte(uint8_t colorValue)
+void sendByte(uint8_t colorValue, volatile uint8_t* ledPORT, uint8_t ledPIN)
 {
   uint8_t bit;
 
@@ -44,20 +49,20 @@ void sendByte(uint8_t colorValue)
     
     if (bit == 0)
     {
-      sendZero();
+      sendZero(ledPORT, ledPIN);
     }
     else if (bit == 1)
     {
-      sendOne();
+      sendOne(ledPORT, ledPIN);
     }
   }
 }
 
-void sendPixel(struct RGB rgb)
+void sendPixel(struct RGB rgb, volatile uint8_t* ledPORT, uint8_t ledPIN)
 {
-  sendByte(rgb.greenBits);
-  sendByte(rgb.redBits);
-  sendByte(rgb.blueBits);
+  sendByte(rgb.greenBits, ledPORT, ledPIN);
+  sendByte(rgb.redBits, ledPORT, ledPIN);
+  sendByte(rgb.blueBits, ledPORT, ledPIN);
 }
 
 struct RGB setRGB(uint8_t r, uint8_t g, uint8_t b)
@@ -71,34 +76,40 @@ struct RGB setRGB(uint8_t r, uint8_t g, uint8_t b)
   return rgb;
 }
 
-struct RGB* initStrip()
+struct Strip initStrip(uint32_t numLeds, volatile uint8_t* ledPORT, uint8_t ledPIN)
 {
-  LED_DDR = LED_DDR | (1 << LED_PIN);
+  *(ledPORT - 1) = *(ledPORT - 1) | (1 << ledPIN);
 
-  struct RGB* strip = (struct RGB*)malloc(NUM_LEDS * sizeof(struct RGB));
+  struct Strip strip;
 
-  for (int i = 0; i < NUM_LEDS; i++)
+  strip.ledsArray = (struct RGB*)malloc(numLeds * sizeof(struct RGB));
+
+  for (int i = 0; i < numLeds; i++)
   {
-    strip[i] = setRGB(0, 0, 0);
-  }  
-  
+    strip.ledsArray[i] = setRGB(0, 0, 0);
+  }
+
+  strip.numLeds = numLeds;
+  strip.ledPIN = ledPIN;
+  strip.ledPORT = ledPORT;
+
   return strip;
 }
 
-void showStrip(struct RGB* strip)
+void showStrip(struct Strip strip)
 {
-  for (int i = 0; i < NUM_LEDS; i++)
+  for (int i = 0; i < strip.numLeds; i++)
   {
-    sendPixel(strip[i]);
+    sendPixel(strip.ledsArray[i], strip.ledPORT, strip.ledPIN);
   }
 
-  reset();
+  reset(strip.ledPORT, strip.ledPIN);
 }
 
-void clearStrip(struct RGB* strip)
+void clearStrip(struct Strip strip)
 {
-  for (int i = 0; i < NUM_LEDS; i++)
+  for (int i = 0; i < strip.numLeds; i++)
   {
-    strip[i] = setRGB(0, 0, 0);
+    strip.ledsArray[i] = setRGB(0, 0, 0);
   }
 }
